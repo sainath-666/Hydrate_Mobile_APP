@@ -9,9 +9,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalDrink
-import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material3.*
@@ -105,30 +106,64 @@ fun DashboardScreen(viewModel: MainViewModel) {
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    QuickAddCard(
-                        icon = Icons.Default.LocalDrink,
-                        name = "Water",
-                        amount = 250,
-                        onClick = { viewModel.addDrink(250, "Water") }
-                    )
-                    QuickAddCard(
-                        icon = Icons.Default.LocalDrink,
-                        name = "Large Water",
-                        amount = 500,
-                        onClick = { viewModel.addDrink(500, "Water") }
-                    )
-                    QuickAddCard(
-                        icon = Icons.Default.Coffee,
-                        name = "Coffee/Tea",
-                        amount = 150,
-                        onClick = { viewModel.addDrink(150, "Coffee") }
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        QuickAddCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.LocalDrink,
+                            name = "Small Glass",
+                            amount = 100,
+                            onClick = { viewModel.addDrink(100, "Water") }
+                        )
+                        QuickAddCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.LocalDrink,
+                            name = "Medium Glass",
+                            amount = 200,
+                            onClick = { viewModel.addDrink(200, "Water") }
+                        )
+                        QuickAddCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.LocalDrink,
+                            name = "Standard Glass",
+                            amount = 250,
+                            onClick = { viewModel.addDrink(250, "Water") }
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        QuickAddCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.LocalDrink,
+                            name = "Large Glass",
+                            amount = 300,
+                            onClick = { viewModel.addDrink(300, "Water") }
+                        )
+                        QuickAddCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.LocalDrink,
+                            name = "Bottle",
+                            amount = 500,
+                            onClick = { viewModel.addDrink(500, "Water") }
+                        )
+                        QuickAddCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.LocalDrink,
+                            name = "Big Bottle",
+                            amount = 1000,
+                            onClick = { viewModel.addDrink(1000, "Water") }
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(48.dp))
+                Spacer(modifier = Modifier.height(32.dp))
             }
 
             item {
@@ -209,14 +244,14 @@ fun CircularProgressSection(current: Int, goal: Int) {
 
 @Composable
 fun QuickAddCard(
+    modifier: Modifier = Modifier,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     name: String,
     amount: Int,
     onClick: () -> Unit
 ) {
     Surface(
-        modifier = Modifier
-            .width(100.dp)
+        modifier = modifier
             .height(110.dp)
             .clip(RoundedCornerShape(24.dp))
             .clickable(onClick = onClick),

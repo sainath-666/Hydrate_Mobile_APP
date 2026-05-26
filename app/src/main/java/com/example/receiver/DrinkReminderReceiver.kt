@@ -14,6 +14,12 @@ import java.util.Calendar
 class DrinkReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val prefs = HydrationPrefs(context)
+        
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            ReminderScheduler.scheduleReminders(context, prefs)
+            return
+        }
+
         if (!prefs.remindersActive) return
 
         val cal = Calendar.getInstance()

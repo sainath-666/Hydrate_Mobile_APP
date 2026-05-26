@@ -39,15 +39,18 @@ class HydrationRepository(
     }
 
     private fun calculateStreak(records: List<DrinkRecord>, dailyGoal: Int): Int {
-        if (records.isEmpty()) return 0
+        if (records.isEmpty() || dailyGoal <= 0) return 0
 
         val groupedByDay = records.groupBy { getStartOfDay(it.timestamp) }
             .mapValues { entry -> entry.value.sumOf { it.amountMl } }
 
+        val earliestTimestamp = records.minOfOrNull { it.timestamp } ?: return 0
+        val earliestDay = getStartOfDay(earliestTimestamp)
+
         var currentStreak = 0
         var checkDay = getStartOfDay(System.currentTimeMillis())
 
-        // Check if today was achieved (optional, if they haven't achieved today yet, we still check yesterday)
+        // Check if today was achieved
         val todayAchieved = (groupedByDay[checkDay] ?: 0) >= dailyGoal
         if (todayAchieved) {
             currentStreak++
@@ -55,7 +58,8 @@ class HydrationRepository(
         
         checkDay -= 86400000L // Go to yesterday
 
-        while (true) {
+        // Only traverse back to the earliest recorded day to avoid any possible infinite loop
+        while (checkDay >= earliestDay) {
             if ((groupedByDay[checkDay] ?: 0) >= dailyGoal) {
                 currentStreak++
                 checkDay -= 86400000L
@@ -64,7 +68,6 @@ class HydrationRepository(
             }
         }
         
-        // If today not achieved, but yesterday was, we still count yesterday's streak
         return currentStreak
     }
 }
