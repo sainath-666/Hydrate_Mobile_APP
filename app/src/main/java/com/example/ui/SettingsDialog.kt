@@ -1,5 +1,9 @@
 package com.example.ui
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,11 +20,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+
+private fun Context.findActivity(): Activity? {
+    var cur = this
+    while (cur is ContextWrapper) {
+        if (cur is Activity) return cur
+        cur = cur.baseContext
+    }
+    return null
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,26 +44,23 @@ fun SettingsDialog(
     onDismiss: () -> Unit,
     onSave: (Boolean, Int, Int, Int, Int, Int, Int) -> Unit
 ) {
+    val context = LocalContext.current
+
     var active by remember { mutableStateOf(settingsState.remindersActive) }
     
-    var sHourStr by remember { mutableStateOf(settingsState.startHour.toString()) }
-    var sMinStr by remember { mutableStateOf(settingsState.startMin.toString()) }
-    var eHourStr by remember { mutableStateOf(settingsState.endHour.toString()) }
-    var eMinStr by remember { mutableStateOf(settingsState.endMin.toString()) }
+    var sHour by remember { mutableStateOf(settingsState.startHour) }
+    var sMin by remember { mutableStateOf(settingsState.startMin) }
+    var eHour by remember { mutableStateOf(settingsState.endHour) }
+    var eMin by remember { mutableStateOf(settingsState.endMin) }
+    
     var intervalStr by remember { mutableStateOf(settingsState.intervalMins.toString()) }
     var goalStr by remember { mutableStateOf(settingsState.dailyGoalMl.toString()) }
 
     // Validation
-    val parsedSHour = sHourStr.toIntOrNull()?.coerceIn(0, 23)
-    val parsedSMin = sMinStr.toIntOrNull()?.coerceIn(0, 59)
-    val parsedEHour = eHourStr.toIntOrNull()?.coerceIn(0, 23)
-    val parsedEMin = eMinStr.toIntOrNull()?.coerceIn(0, 59)
     val parsedInterval = intervalStr.toIntOrNull()?.coerceIn(1, 1440)
     val parsedGoal = goalStr.toIntOrNull()?.coerceIn(100, 10000)
 
-    val isInputValid = (!active || (parsedSHour != null && parsedSMin != null &&
-            parsedEHour != null && parsedEMin != null && parsedInterval != null)) &&
-            parsedGoal != null
+    val isInputValid = parsedGoal != null && (!active || parsedInterval != null)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -128,7 +140,7 @@ fun SettingsDialog(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (active) {
-                // Time Range Section Card
+                // Interactive Time Range Section Card with Time Pickers
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     shape = RoundedCornerShape(20.dp),
@@ -149,53 +161,50 @@ fun SettingsDialog(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        Text("Start Time (24h)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedTextField(
-                                value = sHourStr,
-                                onValueChange = { sHourStr = it.filter { char -> char.isDigit() } },
-                                label = { Text("Hour") },
-                                placeholder = { Text("07") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedTextField(
-                                value = sMinStr,
-                                onValueChange = { sMinStr = it.filter { char -> char.isDigit() } },
-                                label = { Text("Minute") },
-                                placeholder = { Text("00") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        
                         Spacer(modifier = Modifier.height(16.dp))
                         
-                        Text("End Time (24h)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            OutlinedTextField(
-                                value = eHourStr,
-                                onValueChange = { eHourStr = it.filter { char -> char.isDigit() } },
-                                label = { Text("Hour") },
-                                placeholder = { Text("22") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Start Time Selector
+                            TimeSelectorCard(
+                                modifier = Modifier.weight(1f),
+                                label = "Start Alert At",
+                                hour = sHour,
+                                minute = sMin,
+                                onClick = {
+                                    TimePickerDialog(
+                                        context.findActivity() ?: context,
+                                        { _, selectedHour, selectedMinute ->
+                                            sHour = selectedHour
+                                            sMin = selectedMinute
+                                        },
+                                        sHour,
+                                        sMin,
+                                        false // Show AM/PM selector
+                                    ).show()
+                                }
                             )
-                            OutlinedTextField(
-                                value = eMinStr,
-                                onValueChange = { eMinStr = it.filter { char -> char.isDigit() } },
-                                label = { Text("Minute") },
-                                placeholder = { Text("00") },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
+
+                            // End Time Selector
+                            TimeSelectorCard(
+                                modifier = Modifier.weight(1f),
+                                label = "End Alert At",
+                                hour = eHour,
+                                minute = eMin,
+                                onClick = {
+                                    TimePickerDialog(
+                                        context.findActivity() ?: context,
+                                        { _, selectedHour, selectedMinute ->
+                                            eHour = selectedHour
+                                            eMin = selectedMinute
+                                        },
+                                        eHour,
+                                        eMin,
+                                        false // Show AM/PM selector
+                                    ).show()
+                                }
                             )
                         }
                     }
@@ -227,7 +236,7 @@ fun SettingsDialog(
                         OutlinedTextField(
                             value = intervalStr,
                             onValueChange = { intervalStr = it.filter { char -> char.isDigit() } },
-                            label = { Text("Alert Period (Minutes)") },
+                            label = { Text("Alert Period") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth(),
@@ -263,7 +272,7 @@ fun SettingsDialog(
                     OutlinedTextField(
                         value = goalStr,
                         onValueChange = { goalStr = it.filter { char -> char.isDigit() } },
-                        label = { Text("Daily Water Limit (ml)") },
+                        label = { Text("Daily Water Limit") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
@@ -275,7 +284,7 @@ fun SettingsDialog(
 
             if (!isInputValid) {
                 Text(
-                    text = "❗ Please check your inputs (Hours: 0-23, Minutes: 0-59, Interval > 0)",
+                    text = "❗ Please enter a valid Target Goal and Interval Period.",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
@@ -288,10 +297,10 @@ fun SettingsDialog(
                     if (isInputValid) {
                         onSave(
                             active,
-                            parsedSHour ?: 7,
-                            parsedSMin ?: 0,
-                            parsedEHour ?: 22,
-                            parsedEMin ?: 0,
+                            sHour,
+                            sMin,
+                            eHour,
+                            eMin,
                             parsedInterval ?: settingsState.intervalMins,
                             parsedGoal ?: settingsState.dailyGoalMl
                         )
@@ -309,4 +318,57 @@ fun SettingsDialog(
     }
 }
 
+@Composable
+fun TimeSelectorCard(
+    modifier: Modifier = Modifier,
+    label: String,
+    hour: Int,
+    minute: Int,
+    onClick: () -> Unit
+) {
+    val h12 = if (hour == 0 || hour == 12) 12 else hour % 12
+    val amPm = if (hour >= 12) "PM" else "AM"
+    val hStr = h12.toString().padStart(2, '0')
+    val mStr = minute.toString().padStart(2, '0')
 
+    Surface(
+        onClick = onClick,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "$hStr:$mStr",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = 0.5.sp
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = amPm,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
