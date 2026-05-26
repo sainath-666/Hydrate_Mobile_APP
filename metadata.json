@@ -1,0 +1,6 @@
+{
+  "name": "Hydrate",
+  "description": "A smart water reminder and hydration tracking application.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
